@@ -23,7 +23,7 @@ class Expense
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $created = null;
 
-    #[ORM\ManyToOne(inversedBy: 'expenses')]
+    #[ORM\ManyToOne(cascade: ['persist'], inversedBy: 'expenses')]
     #[ORM\JoinColumn(nullable: false)]
     private ?ExpenseCategory $category = null;
 

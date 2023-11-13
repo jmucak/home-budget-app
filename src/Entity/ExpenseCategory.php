@@ -53,7 +53,7 @@ class ExpenseCategory
 
     public function addExpense(Expense $expense): static
     {
-        if (!$this->expenses->contains($expense)) {
+        if ( ! $this->expenses->contains($expense)) {
             $this->expenses->add($expense);
             $expense->setCategory($this);
         }
