@@ -3,6 +3,7 @@
 namespace App\DataFixtures;
 
 use App\Entity\ExpenseCategory;
+use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
@@ -27,6 +28,11 @@ class AppFixtures extends Fixture
             $category->setName($expense_category['name']);
             $manager->persist($category);
         }
+
+        $user = new User();
+        $user->setEmail('jmucak22@gmail.com');
+        $user->setPassword('1234');
+        $manager->persist($user);
 
         // $product = new Product();
         // $manager->persist($product);

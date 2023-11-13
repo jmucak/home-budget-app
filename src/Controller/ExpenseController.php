@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Expense;
 use App\Repository\ExpenseCategoryRepository;
 use App\Repository\ExpenseRepository;
+use App\Repository\UserRepository;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -77,7 +78,8 @@ class ExpenseController extends AbstractController
     public function addExpense(
         Request $request,
         EntityManagerInterface $entityManager,
-        ExpenseCategoryRepository $expenseCategoryRepository
+        ExpenseCategoryRepository $expenseCategoryRepository,
+        UserRepository $userRepository,
     ): Response {
 
         $expense  = new Expense();
@@ -86,6 +88,9 @@ class ExpenseController extends AbstractController
         $expense->setDescription($request->get('description'));
         $expense->setCategory($category);
         $expense->setAmount($request->get('amount'));
+
+        $user = $userRepository->find($request->get('user'));
+        $expense->setUser($user);
 
         $entityManager->persist($expense);
         $entityManager->flush();
