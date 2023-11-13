@@ -28,16 +28,49 @@ class ExpenseController extends AbstractController
 
         $data = array();
         foreach ($expenses as $expense) {
-            $data[] = array(
+            $category = $expense->getCategory();
+            $data[]   = array(
                 'id'          => $expense->getId(),
                 'description' => $expense->getDescription(),
                 'amount'      => $expense->getAmount(),
-                'category'    => $expense->getCategory(),
+                'category'    => array(
+                    'id'   => $category->getId(),
+                    'name' => $category->getName(),
+                ),
                 'created'     => $expense->getCreated(),
             );
         }
 
         return $this->json($data);
+    }
+
+    #[Route('/', name: 'app_expense', methods: ['GET'])]
+    public function getExpense(int $id, ExpenseRepository $expenseRepository): Response
+    {
+        $expense = $expenseRepository->find($id);
+
+        if ( ! $expense) {
+            return $this->json(array(
+                'status'  => 404,
+                'message' => 'No expense found',
+            ));
+        }
+
+        $category = $expense->getCategory();
+
+        return $this->json(array(
+            'status'  => 200,
+            'expense' => array(
+                'id'          => $expense->getId(),
+                'description' => $expense->getDescription(),
+                'amount'      => $expense->getAmount(),
+                'created'     => $expense->getCreated(),
+                'category'    => array(
+                    'id'   => $category->getId(),
+                    'name' => $category->getName(),
+                ),
+            ),
+        ));
     }
 
     #[Route('/', name: 'app_expense_add', methods: ['POST'])]
