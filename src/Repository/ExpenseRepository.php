@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Expense;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -19,6 +20,21 @@ class ExpenseRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Expense::class);
+    }
+
+    public function findAllByUser(int|User $user)
+    {
+        $user  = $user instanceof User ? $user->getId() : $user;
+        $query = $this->createQueryBuilder('expenses')
+                      ->leftJoin('expenses.user', 'user')
+                      ->addSelect('user')
+                      ->where('expenses.user = (:user)')
+                      ->setParameter('user', $user)
+                      ->orderBy('expenses.created', 'DESC')
+                      ->getQuery()
+                      ->getResult();
+
+        return $query;
     }
 
 //    /**

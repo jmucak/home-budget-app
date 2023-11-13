@@ -12,18 +12,26 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/expense', name: 'expense_api')]
 class ExpenseController extends AbstractController
 {
     #[Route('/', name: 'app_expenses', methods: ['GET'])]
-    public function index(ExpenseRepository $expenseRepository): Response
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function index(
+        ExpenseRepository $expenseRepository,
+        Request $request,
+    ): Response
     {
-        $expenses = $expenseRepository->findAll();
+        $currentUser = $this->getUser();
+        $expenses = $expenseRepository->findAllByUser($currentUser->getId());
 
         if (empty($expenses)) {
             return $this->json(array(
                 'message' => 'No expenses',
+                'user'    => $currentUser->getUserIdentifier(),
             ));
         }
 
@@ -80,8 +88,8 @@ class ExpenseController extends AbstractController
         EntityManagerInterface $entityManager,
         ExpenseCategoryRepository $expenseCategoryRepository,
         UserRepository $userRepository,
+        UserInterface $user
     ): Response {
-
         $expense  = new Expense();
         $category = $expenseCategoryRepository->find($request->get('category'));
         $expense->setCreated(new DateTime());
@@ -89,8 +97,7 @@ class ExpenseController extends AbstractController
         $expense->setCategory($category);
         $expense->setAmount($request->get('amount'));
 
-        $user = $userRepository->find($request->get('user'));
-        $expense->setUser($user);
+        $expense->setUser($this->getUser());
 
         $entityManager->persist($expense);
         $entityManager->flush();
