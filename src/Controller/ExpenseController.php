@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\Expense;
-use App\Entity\ExpenseCategory;
 use App\Repository\ExpenseCategoryRepository;
 use App\Repository\ExpenseRepository;
 use DateTime;
@@ -13,10 +12,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api', name: 'expense_api')]
+#[Route('/api/expense', name: 'expense_api')]
 class ExpenseController extends AbstractController
 {
-    #[Route('/expense', name: 'app_expense', methods: ['GET'])]
+    #[Route('/', name: 'app_expenses', methods: ['GET'])]
     public function index(ExpenseRepository $expenseRepository): Response
     {
         $expenses = $expenseRepository->findAll();
@@ -41,7 +40,7 @@ class ExpenseController extends AbstractController
         return $this->json($data);
     }
 
-    #[Route('/expense', name: 'app_expense_add', methods: ['POST'])]
+    #[Route('/', name: 'app_expense_add', methods: ['POST'])]
     public function addExpense(
         Request $request,
         EntityManagerInterface $entityManager,
@@ -63,7 +62,7 @@ class ExpenseController extends AbstractController
         ));
     }
 
-    #[Route('/expense/{id}', name: 'app_expense_edit', methods: ['PUT'])]
+    #[Route('/{id}', name: 'app_expense_edit', methods: ['PUT'])]
     public function updateExpense(
         int $id,
         Request $request,
@@ -94,11 +93,11 @@ class ExpenseController extends AbstractController
         ));
     }
 
-    #[Route('/expense/{id}', name: 'app_expense_delete', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'app_expense_delete', methods: ['DELETE'])]
     public function deleteExpense(
         int $id,
+        EntityManagerInterface $entityManager,
         ExpenseRepository $expenseRepository,
-        EntityManagerInterface $entityManager
     ): Response {
         $expense = $expenseRepository->find($id);
 
