@@ -28,18 +28,45 @@ class ExpenseRepository extends ServiceEntityRepository
      *
      * @return Expense[]
      */
-    public function findAllByUser(int|UserInterface $user): array
+    public function findAllByUser(int|UserInterface $user, array $params = []): array
     {
         $user = $user instanceof User ? $user->getId() : $user;
 
-        return $this->createQueryBuilder('expenses')
-                    ->leftJoin('expenses.user', 'user')
-                    ->addSelect('user')
-                    ->where('expenses.user = (:user)')
-                    ->setParameter('user', $user)
-                    ->orderBy('expenses.created', 'DESC')
-                    ->getQuery()
-                    ->getResult();
+        $query = $this->createQueryBuilder('expenses')
+                      ->leftJoin('expenses.user', 'user')
+                      ->addSelect('user')
+                      ->where('expenses.user = (:user)')
+                      ->setParameter('user', $user);
+
+        if ( ! empty($params['category'])) {
+            $query->andWhere('expenses.category = (:category)')
+                  ->setParameter('category', $params['category']);
+        }
+
+        if ( ! empty($params['price'])) {
+            $orderBy = [
+                'sort' => 'expenses.amount',
+            ];
+            switch ($params['price']) {
+                case 'min-max':
+                    $orderBy['order'] = 'ASC';
+                    break;
+                case 'max-min':
+                    $orderBy['order'] = 'DESC';
+                    break;
+            }
+        }
+
+        if (empty($orderBy['order'])) {
+            $orderBy = [
+                'sort'  => 'expenses.created',
+                'order' => $params['date'],
+            ];
+        }
+
+        $query->orderBy($orderBy['sort'], $orderBy['order']);
+
+        return $query->setMaxResults($params['limit'])->getQuery()->getResult();
     }
 
     public function findByUser(int|UserInterface $user, int $expense_id): ?Expense

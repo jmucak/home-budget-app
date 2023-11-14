@@ -24,7 +24,12 @@ class ExpenseController extends AbstractController
         ExpenseRepository $expenseRepository,
         Request $request,
     ): Response {
-        $expenses    = $expenseRepository->findAllByUser($this->getUser());
+        $expenses = $expenseRepository->findAllByUser($this->getUser(), [
+            'category' => ! empty($request->get('category')) ? $request->get('category') : '',
+            'date'     => ! empty($request->get('date')) ? $request->get('date') : 'DESC',
+            'limit'    => ! empty($request->get('limit')) ? $request->get('limit') : 100,
+            'price'    => ! empty($request->get('price')) ? $request->get('price') : '',
+        ]);
 
         if (empty($expenses)) {
             return $this->json([
@@ -53,7 +58,7 @@ class ExpenseController extends AbstractController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function getExpense(int $id, ExpenseRepository $expenseRepository): Response
     {
-        $expense     = $expenseRepository->findByUser($this->getUser(), $id);
+        $expense = $expenseRepository->findByUser($this->getUser(), $id);
 
         if ( ! $expense) {
             return $this->json(array(
@@ -83,7 +88,7 @@ class ExpenseController extends AbstractController
         UserRepository $userRepository,
         UserInterface $user
     ): Response {
-        $category    = $expenseCategoryRepository->findOneByUser(
+        $category = $expenseCategoryRepository->findOneByUser(
             $this->getUser(),
             $request->get('category')
         );
@@ -93,7 +98,7 @@ class ExpenseController extends AbstractController
                 'message' => 'Category not provided',
             ], 404);
         }
-        $expense     = new Expense();
+        $expense = new Expense();
         $expense->setCreated(new DateTime());
         $expense->setDescription($request->get('description'));
         $expense->setCategory($category);
@@ -124,7 +129,7 @@ class ExpenseController extends AbstractController
         ExpenseRepository $expenseRepository,
         ExpenseCategoryRepository $expenseCategoryRepository
     ): Response {
-        $expense     = $expenseRepository->findByUser($this->getUser(), $id);
+        $expense = $expenseRepository->findByUser($this->getUser(), $id);
 
         if (empty($expense)) {
             return $this->json([
@@ -175,7 +180,7 @@ class ExpenseController extends AbstractController
         EntityManagerInterface $entityManager,
         ExpenseRepository $expenseRepository,
     ): Response {
-        $expense     = $expenseRepository->findByUser($this->getUser(), $id);
+        $expense = $expenseRepository->findByUser($this->getUser(), $id);
 
         if ( ! $expense) {
             return $this->json([
