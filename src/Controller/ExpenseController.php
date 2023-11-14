@@ -30,9 +30,8 @@ class ExpenseController extends AbstractController
     ): Response {
         $expenses = $expenseRepository->findAllByUser($this->getUser(), [
             'category' => ! empty($request->get('category')) ? $request->get('category') : '',
-            'date'     => ! empty($request->get('date')) ? $request->get('date') : 'DESC',
+            'order_by' => ! empty($request->get('order_by')) ? $request->get('order_by') : 'price_desc',
             'limit'    => ! empty($request->get('limit')) ? $request->get('limit') : 100,
-            'price'    => ! empty($request->get('price')) ? $request->get('price') : '',
         ]);
 
         if (empty($expenses)) {
