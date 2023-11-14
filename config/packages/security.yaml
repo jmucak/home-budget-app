@@ -24,7 +24,7 @@ security:
         failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
     api:
-      pattern: ^/api
+      pattern: ^/api/
       stateless: true
       jwt: ~
 
@@ -51,7 +51,7 @@ security:
     # - { path: ^/profile, roles: ROLE_USER }
     - { path: ^/register, roles: PUBLIC_ACCESS }
     - { path: ^/api/login, roles: PUBLIC_ACCESS }
-    - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }
+    - { path: ^/api/,       roles: IS_AUTHENTICATED_FULLY }
 when@test:
   security:
     password_hashers:

@@ -11,9 +11,14 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/api/expense/category', name: 'expense_category_api')]
+#[Route('/api/expense_category', name: 'expense_category_api')]
 class ExpenseCategoryController extends AbstractController
 {
+    public function __invoke()
+    {
+
+    }
+
     #[Route('/', name: 'app_expense_categories', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function index(ExpenseCategoryRepository $expenseCategoryRepository): Response
@@ -75,7 +80,7 @@ class ExpenseCategoryController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_expense_category_edit', methods: ['PUT'])]
+    #[Route('/{id}', name: 'app_expense_category_edit', methods: ['PATCH'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function updateCategory(
         int $id,

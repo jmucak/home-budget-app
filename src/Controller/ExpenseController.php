@@ -18,6 +18,10 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/api/expense', name: 'expense_api')]
 class ExpenseController extends AbstractController
 {
+    public function __invoke()
+    {
+    }
+
     #[Route('/', name: 'app_expenses', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function index(
@@ -120,7 +124,7 @@ class ExpenseController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_expense_edit', methods: ['PUT'])]
+    #[Route('/{id}', name: 'app_expense_edit', methods: ['PATCH'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function updateExpense(
         int $id,
