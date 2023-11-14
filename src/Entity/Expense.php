@@ -12,8 +12,7 @@ use App\Repository\ExpenseRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-#[
-    ORM\Entity(repositoryClass: ExpenseRepository::class)]
+#[ORM\Entity(repositoryClass: ExpenseRepository::class)]
 #[ApiResource(
     operations: [
         new Get(
