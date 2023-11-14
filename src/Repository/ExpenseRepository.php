@@ -6,6 +6,7 @@ use App\Entity\Expense;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @extends ServiceEntityRepository<Expense>
@@ -22,43 +23,40 @@ class ExpenseRepository extends ServiceEntityRepository
         parent::__construct($registry, Expense::class);
     }
 
-    public function findAllByUser(int|User $user)
+    /**
+     * @param int|UserInterface $user
+     *
+     * @return Expense[]
+     */
+    public function findAllByUser(int|UserInterface $user): array
     {
-        $user  = $user instanceof User ? $user->getId() : $user;
-        $query = $this->createQueryBuilder('expenses')
-                      ->leftJoin('expenses.user', 'user')
+        $user = $user instanceof User ? $user->getId() : $user;
+
+        return $this->createQueryBuilder('expenses')
+                    ->leftJoin('expenses.user', 'user')
+                    ->addSelect('user')
+                    ->where('expenses.user = (:user)')
+                    ->setParameter('user', $user)
+                    ->orderBy('expenses.created', 'DESC')
+                    ->getQuery()
+                    ->getResult();
+    }
+
+    public function findByUser(int|UserInterface $user, int $expense_id): ?Expense
+    {
+        $user = $user instanceof User ? $user->getId() : $user;
+
+        $query = $this->createQueryBuilder('expense')
+                      ->innerJoin('expense.user', 'user')
                       ->addSelect('user')
-                      ->where('expenses.user = (:user)')
+                      ->where('expense.user = (:user)')
+                      ->andWhere('expense.id = (:id)')
                       ->setParameter('user', $user)
-                      ->orderBy('expenses.created', 'DESC')
+                      ->setParameter('id', $expense_id)
+                      ->setMaxResults(1)
                       ->getQuery()
                       ->getResult();
 
-        return $query;
+        return ! empty($query[0]) ? $query[0] : null;
     }
-
-//    /**
-//     * @return Expense[] Returns an array of Expense objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('e')
-//            ->andWhere('e.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('e.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?Expense
-//    {
-//        return $this->createQueryBuilder('e')
-//            ->andWhere('e.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
 }

@@ -21,6 +21,10 @@ class ExpenseCategory
     #[ORM\OneToMany(mappedBy: 'category', targetEntity: Expense::class)]
     private Collection $expenses;
 
+    #[ORM\ManyToOne(inversedBy: 'expenseCategories')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $user = null;
+
     public function __construct()
     {
         $this->expenses = new ArrayCollection();
@@ -69,6 +73,18 @@ class ExpenseCategory
                 $expense->setCategory(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
 
         return $this;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\ExpenseCategory;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -31,6 +32,26 @@ class RegisterController extends AbstractController
         );
 
         $entityManager->persist($user);
+
+        $categories = array(
+            array(
+                'name' => 'Food',
+            ),
+            array(
+                'name' => 'Bills',
+            ),
+            array(
+                'name' => 'Rent',
+            ),
+        );
+
+        foreach ($categories as $expense_category) {
+            $category = new ExpenseCategory();
+            $category->setName($expense_category['name']);
+            $category->setUser($user);
+            $entityManager->persist($category);
+        }
+
         $entityManager->flush();
 
         return $this->json([

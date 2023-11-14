@@ -23,66 +23,59 @@ class ExpenseController extends AbstractController
     public function index(
         ExpenseRepository $expenseRepository,
         Request $request,
-    ): Response
-    {
-        $currentUser = $this->getUser();
-        $expenses = $expenseRepository->findAllByUser($currentUser->getId());
+    ): Response {
+        $expenses    = $expenseRepository->findAllByUser($this->getUser());
 
         if (empty($expenses)) {
-            return $this->json(array(
+            return $this->json([
                 'message' => 'No expenses',
-                'user'    => $currentUser->getUserIdentifier(),
-            ));
+            ], 404);
         }
 
-        $data = array();
+        $data = [];
         foreach ($expenses as $expense) {
             $category = $expense->getCategory();
-            $data[]   = array(
+            $data[]   = [
                 'id'          => $expense->getId(),
                 'description' => $expense->getDescription(),
                 'amount'      => $expense->getAmount(),
-                'category'    => array(
+                'category'    => [
                     'id'   => $category->getId(),
                     'name' => $category->getName(),
-                ),
-                'created'     => $expense->getCreated(),
-            );
+                ],
+            ];
         }
 
         return $this->json($data);
     }
 
-    #[Route('/', name: 'app_expense', methods: ['GET'])]
+    #[Route('/{id}', name: 'app_expense', methods: ['GET'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function getExpense(int $id, ExpenseRepository $expenseRepository): Response
     {
-        $expense = $expenseRepository->find($id);
+        $expense     = $expenseRepository->findByUser($this->getUser(), $id);
 
         if ( ! $expense) {
             return $this->json(array(
-                'status'  => 404,
                 'message' => 'No expense found',
-            ));
+            ), 404);
         }
 
         $category = $expense->getCategory();
 
-        return $this->json(array(
-            'status'  => 200,
-            'expense' => array(
-                'id'          => $expense->getId(),
-                'description' => $expense->getDescription(),
-                'amount'      => $expense->getAmount(),
-                'created'     => $expense->getCreated(),
-                'category'    => array(
-                    'id'   => $category->getId(),
-                    'name' => $category->getName(),
-                ),
-            ),
-        ));
+        return $this->json([
+            'id'          => $expense->getId(),
+            'description' => $expense->getDescription(),
+            'amount'      => $expense->getAmount(),
+            'category'    => [
+                'id'   => $category->getId(),
+                'name' => $category->getName(),
+            ],
+        ]);
     }
 
     #[Route('/', name: 'app_expense_add', methods: ['POST'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function addExpense(
         Request $request,
         EntityManagerInterface $entityManager,
@@ -90,8 +83,17 @@ class ExpenseController extends AbstractController
         UserRepository $userRepository,
         UserInterface $user
     ): Response {
-        $expense  = new Expense();
-        $category = $expenseCategoryRepository->find($request->get('category'));
+        $category    = $expenseCategoryRepository->findOneByUser(
+            $this->getUser(),
+            $request->get('category')
+        );
+
+        if (empty($category)) {
+            return $this->json([
+                'message' => 'Category not provided',
+            ], 404);
+        }
+        $expense     = new Expense();
         $expense->setCreated(new DateTime());
         $expense->setDescription($request->get('description'));
         $expense->setCategory($category);
@@ -102,12 +104,19 @@ class ExpenseController extends AbstractController
         $entityManager->persist($expense);
         $entityManager->flush();
 
-        return $this->json(array(
-            'message' => 'Expense '.$expense->getDescription().' added to database',
-        ));
+        return $this->json([
+            'id'          => $expense->getId(),
+            'description' => $expense->getDescription(),
+            'amount'      => $expense->getAmount(),
+            'category'    => [
+                'id'   => $category->getId(),
+                'name' => $category->getName(),
+            ],
+        ]);
     }
 
     #[Route('/{id}', name: 'app_expense_edit', methods: ['PUT'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function updateExpense(
         int $id,
         Request $request,
@@ -115,50 +124,71 @@ class ExpenseController extends AbstractController
         ExpenseRepository $expenseRepository,
         ExpenseCategoryRepository $expenseCategoryRepository
     ): Response {
-        $expense = $expenseRepository->find($id);
+        $expense     = $expenseRepository->findByUser($this->getUser(), $id);
 
-        if ( ! empty($request->get('description'))) {
+        if (empty($expense)) {
+            return $this->json([
+                'message' => 'No expense found',
+            ], 404);
+        }
+
+
+        if (null !== $request->get('description')) {
             $expense->setDescription($request->get('description'));
         }
 
-        if ( ! empty($request->get('amount'))) {
+        if (null !== $request->get('amount')) {
             $expense->setAmount($request->get('amount'));
         }
 
         if ( ! empty($request->get('category'))) {
-            $category = $expenseCategoryRepository->find($request->get('category'));
+            $category = $expenseCategoryRepository->findOneByUser($currentUser->getId(), $request->get('category'));
+
+            if (empty($category)) {
+                return $this->json([
+                    'message' => 'Wrong category ID',
+                ], 404);
+            }
             $expense->setCategory($category);
         }
 
         $entityManager->persist($expense);
         $entityManager->flush();
 
-        return $this->json(array(
-            'message' => 'Expense successfully updated',
-        ));
+        $category = $expense->getCategory();
+
+        return $this->json([
+            'id'          => $expense->getId(),
+            'description' => $expense->getDescription(),
+            'amount'      => $expense->getAmount(),
+            'category'    => [
+                'id'   => $category->getId(),
+                'name' => $category->getName(),
+            ],
+        ]);
     }
 
     #[Route('/{id}', name: 'app_expense_delete', methods: ['DELETE'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function deleteExpense(
         int $id,
         EntityManagerInterface $entityManager,
         ExpenseRepository $expenseRepository,
     ): Response {
-        $expense = $expenseRepository->find($id);
+        $expense     = $expenseRepository->findByUser($this->getUser(), $id);
 
         if ( ! $expense) {
-            return $this->json(array(
-                'status'  => 404,
+            return $this->json([
                 'message' => 'Post not found',
-            ));
+            ], 404);
         }
 
+        $description = $expense->getDescription();
         $entityManager->remove($expense);
         $entityManager->flush();
 
-        return $this->json(array(
-            'status'  => 200,
-            'message' => 'Expense deleted successfully',
-        ));
+        return $this->json([
+            'message' => sprintf('Expense "%s" successfully deleted', $description),
+        ]);
     }
 }

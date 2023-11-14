@@ -3,8 +3,10 @@
 namespace App\Repository;
 
 use App\Entity\ExpenseCategory;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @extends ServiceEntityRepository<ExpenseCategory>
@@ -21,28 +23,35 @@ class ExpenseCategoryRepository extends ServiceEntityRepository
         parent::__construct($registry, ExpenseCategory::class);
     }
 
-//    /**
-//     * @return ExpenseCategory[] Returns an array of ExpenseCategory objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('e')
-//            ->andWhere('e.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('e.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    /**
+     * @param int|User $user
+     *
+     * @return ExpenseCategory[]
+     */
+    public function findByUser(int|UserInterface $user): array
+    {
+        $user = $user instanceof User ? $user->getId() : $user;
 
-//    public function findOneBySomeField($value): ?ExpenseCategory
-//    {
-//        return $this->createQueryBuilder('e')
-//            ->andWhere('e.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+        return $this->createQueryBuilder('category')
+                    ->where('category.user = :user')
+                    ->setParameter('user', $user)
+                    ->getQuery()
+                    ->getResult();
+    }
+
+    public function findOneByUser(int|UserInterface $user, int $category_id): ?ExpenseCategory
+    {
+        $user = $user instanceof User ? $user->getId() : $user;
+
+        $query = $this->createQueryBuilder('category')
+                      ->where('category.user = :user')
+                      ->andWhere('category.id = :category')
+                      ->setParameter('category', $category_id)
+                      ->setParameter('user', $user)
+                      ->setMaxResults(1)
+                      ->getQuery()
+                      ->getResult();
+
+        return ! empty($query[0]) ? $query[0] : null;
+    }
 }
