@@ -10,6 +10,7 @@ use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -49,7 +50,7 @@ class ExpenseController extends AbstractController
     public function index(
         ExpenseRepository $expenseRepository,
         Request $request,
-    ): Response {
+    ): JsonResponse {
         $expenses = $expenseRepository->findAllByUser($this->getUser(), [
             'category' => ! empty($request->get('category')) ? $request->get('category') : '',
             'order_by' => ! empty($request->get('order_by')) ? $request->get('order_by') : 'price_desc',
@@ -87,7 +88,7 @@ class ExpenseController extends AbstractController
     )]
     #[OA\Tag(name: 'Expenses')]
     #[Security(name: 'Bearer')]
-    public function getExpense(int $id, ExpenseRepository $expenseRepository): Response
+    public function getExpense(int $id, ExpenseRepository $expenseRepository): JsonResponse
     {
         $expense = $expenseRepository->findByUser($this->getUser(), $id);
 
@@ -145,7 +146,7 @@ class ExpenseController extends AbstractController
         ExpenseCategoryRepository $expenseCategoryRepository,
         UserRepository $userRepository,
         UserInterface $user
-    ): Response {
+    ): JsonResponse {
         if (empty($request->get('category')) || empty($request->get('amount')) || empty($request->get('description'))) {
             return $this->json([
                 'message' => 'Category, description and amount are required fields',
@@ -219,7 +220,7 @@ class ExpenseController extends AbstractController
         EntityManagerInterface $entityManager,
         ExpenseRepository $expenseRepository,
         ExpenseCategoryRepository $expenseCategoryRepository
-    ): Response {
+    ): JsonResponse {
         $expense = $expenseRepository->findByUser($this->getUser(), $id);
 
         if (empty($expense)) {
@@ -283,7 +284,7 @@ class ExpenseController extends AbstractController
         int $id,
         EntityManagerInterface $entityManager,
         ExpenseRepository $expenseRepository,
-    ): Response {
+    ): JsonResponse {
         $expense = $expenseRepository->findByUser($this->getUser(), $id);
 
         if ( ! $expense) {
