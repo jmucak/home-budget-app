@@ -2,46 +2,12 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Delete;
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Patch;
-use ApiPlatform\Metadata\Post;
 use App\Repository\ExpenseRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ExpenseRepository::class)]
-#[ApiResource(
-    operations: [
-        new Get(
-            uriTemplate: '/expense/{id}',
-            controller: 'App\Controller\ExpenseController::getExpense',
-            name: 'app_expense'
-        ),
-        new Post(
-            uriTemplate: '/expense',
-            controller: 'App\Controller\ExpenseController::addExpense',
-            name: 'app_expense_add'
-        ),
-        new Patch(
-            uriTemplate: '/expense/{id}',
-            controller: 'App\Controller\ExpenseController::updateExpense',
-            name: 'app_expense_edit'
-        ),
-        new Delete(
-            uriTemplate: '/expense/{id}',
-            controller: 'App\Controller\ExpenseController::deleteExpense',
-            name: 'app_expense_delete'
-        ),
-        new GetCollection(
-            uriTemplate: '/expense',
-            controller: 'App\Controller\ExpenseController::index',
-            name: 'app_expenses'
-        ),
-    ]
-)]
+
 class Expense
 {
     #[ORM\Id]
