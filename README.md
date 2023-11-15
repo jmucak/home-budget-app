@@ -26,6 +26,11 @@ DATABASE_URL="mysql://app:!ChangeMe!@127.0.0.1:3306/app?serverVersion=8.0.32&cha
 
 Create private and public .pem keys for jwt token. (config/jwt)
 
+###> lexik/jwt-authentication-bundle ###
+JWT_SECRET_KEY
+JWT_PUBLIC_KEY
+JWT_PASSPHRASE
+
 ```bash
 $ symfony console lexik:jwt:generate-keypair
 ```
