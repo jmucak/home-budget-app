@@ -1,0 +1,80 @@
+nelmio_api_doc:
+  documentation:
+    info:
+      title: Home Budgeting App
+      description: REST API Application
+      version: 1.0.0
+    components:
+      securitySchemes:
+        Bearer:
+          type: http
+          scheme: bearer
+          bearerFormat: JWT
+    paths:
+      /api/login_check:
+        post:
+          tags:
+            - Login
+          summary: Login into the api.
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  properties:
+                    email:
+                      type: string
+                    password:
+                      type: string
+                  type: object
+          responses:
+            '200':
+              description: OK
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+#                      refresh_token:
+#                        type: string
+            '401':
+              description: Invalid credentials
+            '400':
+              description: Invalid JSON.
+      /api/register:
+        post:
+          tags:
+            - Register
+          summary: Register into the api.
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  properties:
+                    email:
+                      type: string
+                    password:
+                      type: string
+                  type: object
+          responses:
+            '200':
+              description: OK
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+            #                      refresh_token:
+            #                        type: string
+            '401':
+              description: Invalid credentials
+            '400':
+              description: Invalid JSON.
+    security:
+      - Bearer: [ ]
+  areas:
+    path_patterns: # an array of regexps (document only routes under /api, except /api/doc)
+      - ^/api(?!/doc$)

@@ -8,26 +8,48 @@ use App\Repository\ExpenseRepository;
 use App\Repository\UserRepository;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use OpenApi\Attributes as OA;
 
 #[Route('/api/expense', name: 'expense_api')]
 class ExpenseController extends AbstractController
 {
-    public function __invoke()
-    {
-    }
-
     #[Route('/', name: 'app_expenses', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the expenses of an user'
+    )]
+    #[OA\Parameter(
+        name: 'category',
+        description: 'The field used to get expenses by category id',
+        in: 'query',
+        schema: new OA\Schema(type: 'string')
+    )]
+    #[OA\Parameter(
+        name: 'order_by',
+        description: 'The field used to get expenses and order by',
+        in: 'query',
+        schema: new OA\Schema(type: 'string', enum: ['price_asc', 'price_desc', 'date_asc', 'date_desc'])
+    )]
+    #[OA\Parameter(
+        name: 'limit',
+        description: 'The field used to limit expenses',
+        in: 'query',
+        schema: new OA\Schema(type: 'integer', default: 100)
+    )]
+    #[OA\Tag(name: 'Expenses')]
+    #[Security(name: 'Bearer')]
     public function index(
         ExpenseRepository $expenseRepository,
         Request $request,
-    ): Response {
+    ): JsonResponse {
         $expenses = $expenseRepository->findAllByUser($this->getUser(), [
             'category' => ! empty($request->get('category')) ? $request->get('category') : '',
             'order_by' => ! empty($request->get('order_by')) ? $request->get('order_by') : 'price_desc',
@@ -59,7 +81,13 @@ class ExpenseController extends AbstractController
 
     #[Route('/{id}', name: 'app_expense', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function getExpense(int $id, ExpenseRepository $expenseRepository): Response
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the expense of an user by expense id'
+    )]
+    #[OA\Tag(name: 'Expenses')]
+    #[Security(name: 'Bearer')]
+    public function getExpense(int $id, ExpenseRepository $expenseRepository): JsonResponse
     {
         $expense = $expenseRepository->findByUser($this->getUser(), $id);
 
@@ -84,13 +112,46 @@ class ExpenseController extends AbstractController
 
     #[Route('/', name: 'app_expense_add', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[OA\Response(
+        response: 200,
+        description: 'Add expense for the user',
+    )]
+    #[OA\Parameter(
+        name: 'category',
+        description: 'The field used to add expense to a category',
+        in: 'query',
+        required: true,
+        schema: new OA\Schema(type: 'integer')
+    )]
+    #[OA\Parameter(
+        name: 'amount',
+        description: 'The field used to add expense amount',
+        in: 'query',
+        required: true,
+        schema: new OA\Schema(type: 'string')
+    )]
+    #[OA\Parameter(
+        name: 'description',
+        description: 'The field used to add expense description',
+        in: 'query',
+        required: true,
+        schema: new OA\Schema(type: 'string')
+    )]
+    #[OA\Tag(name: 'Expenses')]
+    #[Security(name: 'Bearer')]
     public function addExpense(
         Request $request,
         EntityManagerInterface $entityManager,
         ExpenseCategoryRepository $expenseCategoryRepository,
         UserRepository $userRepository,
         UserInterface $user
-    ): Response {
+    ): JsonResponse {
+        if (empty($request->get('category')) || empty($request->get('amount')) || empty($request->get('description'))) {
+            return $this->json([
+                'message' => 'Category, description and amount are required fields',
+            ], 404);
+        }
+
         $category = $expenseCategoryRepository->findOneByUser(
             $this->getUser(),
             $request->get('category')
@@ -125,13 +186,40 @@ class ExpenseController extends AbstractController
 
     #[Route('/{id}', name: 'app_expense_edit', methods: ['PATCH'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[OA\Response(
+        response: 200,
+        description: 'Update existing expense for the user',
+    )]
+    #[OA\Parameter(
+        name: 'category',
+        description: 'The field used to update expense to a category',
+        in: 'query',
+        required: false,
+        schema: new OA\Schema(type: 'integer')
+    )]
+    #[OA\Parameter(
+        name: 'amount',
+        description: 'The field used to update expense amount',
+        in: 'query',
+        required: false,
+        schema: new OA\Schema(type: 'string')
+    )]
+    #[OA\Parameter(
+        name: 'description',
+        description: 'The field used to update expense description',
+        in: 'query',
+        required: false,
+        schema: new OA\Schema(type: 'string')
+    )]
+    #[OA\Tag(name: 'Expenses')]
+    #[Security(name: 'Bearer')]
     public function updateExpense(
         int $id,
         Request $request,
         EntityManagerInterface $entityManager,
         ExpenseRepository $expenseRepository,
         ExpenseCategoryRepository $expenseCategoryRepository
-    ): Response {
+    ): JsonResponse {
         $expense = $expenseRepository->findByUser($this->getUser(), $id);
 
         if (empty($expense)) {
@@ -150,7 +238,7 @@ class ExpenseController extends AbstractController
         }
 
         if ( ! empty($request->get('category'))) {
-            $category = $expenseCategoryRepository->findOneByUser($currentUser->getId(), $request->get('category'));
+            $category = $expenseCategoryRepository->findOneByUser($this->getUser(), $request->get('category'));
 
             if (empty($category)) {
                 return $this->json([
@@ -178,11 +266,24 @@ class ExpenseController extends AbstractController
 
     #[Route('/{id}', name: 'app_expense_delete', methods: ['DELETE'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[OA\Response(
+        response: 200,
+        description: 'Delete expense for the user',
+    )]
+    #[OA\Parameter(
+        name: 'id',
+        description: 'The field used to delete correct expense',
+        in: 'path',
+        required: false,
+        schema: new OA\Schema(type: 'integer')
+    )]
+    #[OA\Tag(name: 'Expenses')]
+    #[Security(name: 'Bearer')]
     public function deleteExpense(
         int $id,
         EntityManagerInterface $entityManager,
         ExpenseRepository $expenseRepository,
-    ): Response {
+    ): JsonResponse {
         $expense = $expenseRepository->findByUser($this->getUser(), $id);
 
         if ( ! $expense) {
